@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "lsf.github-action.security-fork.v1",
+  "upstreamRepository": "actions/cache",
+  "upstreamRevision": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+  "upstreamTag": "v6.1.0",
+  "runtime": "node24",
+  "nodeBuild": "24.19.0",
+  "dependencyOverrides": {
+    "brace-expansion@1": "1.1.21",
+    "undici@6": "6.29.1"
+  },
+  "productionPackages": 51,
+  "osvFindingCount": 0,
+  "validation": {
+    "name": "cache",
+    "node": "v24.19.0",
+    "calls": [
+      {
+        "stage": "lock",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "install",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "build",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "test",
+        "status": 0,
+        "signal": null
+      }
+    ],
+    "status": 0
+  },
+  "upstreamTests": [
+    "Test Suites: 8 passed, 8 total",
+    "Tests:       76 passed, 76 total",
+    "Snapshots:   0 total",
+    "Time:        6.523 s"
+  ],
+  "bundles": {
+    "dist/restore/index.js": {
+      "bytes": 3400861,
+      "sha256": "2a94b51ea76c9093f0ff23ad74e6431b46a4cacf2f7f8ddfd846e7b10ab3d0b4"
+    },
+    "dist/restore/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    },
+    "dist/restore-only/index.js": {
+      "bytes": 3400724,
+      "sha256": "c6ba2914fdcb76ab2b9ac12a1c1da5214b83442d4dc1431ea16bd3840e7b6b2c"
+    },
+    "dist/restore-only/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    },
+    "dist/save/index.js": {
+      "bytes": 3401325,
+      "sha256": "1465254ad3d72f63fef8aeff8b9c94e79eab04a2aca0b3fd6d120d2b7505b7ed"
+    },
+    "dist/save/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    },
+    "dist/save-only/index.js": {
+      "bytes": 3401268,
+      "sha256": "70697f7b301e2eee2d290c55bdc31d1c6c0ae5aa634d248d4909ce2546b4aa8d"
+    },
+    "dist/save-only/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    }
+  }
+}
