@@ -1,0 +1,91 @@
+name: Focused cache security owner
+
+on:
+  push:
+    branches:
+      - codex/cache-linux-owner-20261105
+
+permissions:
+  contents: read
+
+jobs:
+  exact-source-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      REVIEWED_COMMIT: 9d9c8c5282483cfb06a5899060dd1167eede06f2
+      REVIEWED_TREE: 14fa9727b9b8a1cb9711f46b3caa79650a132e83
+    steps:
+      - name: Check out the owner and its reviewed parent
+        uses: KirilsTurkins/lsf-checkout@4d310727149d3abacc52b5dcb0a1c4d18b345d13
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Authenticate reviewed source and owner boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$REVIEWED_COMMIT"
+          test "$(git rev-parse "$REVIEWED_COMMIT^{tree}")" = "$REVIEWED_TREE"
+          test "$(git diff --name-only "$REVIEWED_COMMIT" HEAD)" = '.github/workflows/cache-security-linux-owner.yml'
+          sha256sum -c <<'SHA256'
+          8e8b46d08a417276c9c979e66f78f1de5b4e0af637c9e60128c738a65b8b64f8  package.json
+          e979985c5b09e89732e1c75abdf62c6f166d8238e4aed768c2fefcf7c44d7131  package-lock.json
+          c4ca0f4eb3a2464c026bc3dec5d9eaf04544aed24c3fd1d77da95f85e36c369f  .lsf-source/deepmerge-4.3.1-lsf-prototype-v1.tar
+          e402617d1e791c4bed35768b6c34ba68c370c076551495e738de0731ad2049c7  .lsf-source/deepmerge-4.3.1-lsf-prototype-v1.repair.json
+          b4b0b79fa2bc84c6f1e1c61ddcc1ab228df629f9fce4b1067d3ac8b3d1c42892  .lsf-source/deepmerge-4.3.1-lsf-prototype-v1.source.json
+          55367db845fb579dd45a1a16924bf017c0ddc8f84162d833e368c24a7d629cf7  .lsf-source/verify-installed-deepmerge.mjs
+          SHA256
+      - name: Install reviewed Node version
+        uses: KirilsTurkins/lsf-setup-node@fdae00b14e855eb751452bc70c64dde286270415
+        with:
+          node-version: 24.19.0
+      - name: Verify Node and npm versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = 'v24.19.0'
+          test "$(npm --version)" = '11.17.0'
+          node --version
+          npm --version
+      - name: Install the exact dependency graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          git diff --exit-code "$REVIEWED_COMMIT" -- package.json package-lock.json .lsf-source
+          if ! npm ls --all > "$RUNNER_TEMP/cache-dependency-tree.log" 2>&1; then
+            tail -n 80 "$RUNNER_TEMP/cache-dependency-tree.log"
+            exit 1
+          fi
+          node .lsf-source/verify-installed-deepmerge.mjs
+      - name: Rebuild and verify every distributed file
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          git ls-tree -r --name-only "$REVIEWED_COMMIT" -- dist | LC_ALL=C sort > "$RUNNER_TEMP/cache-dist-expected.txt"
+          find dist -type f -print | LC_ALL=C sort > "$RUNNER_TEMP/cache-dist-actual.txt"
+          diff -u "$RUNNER_TEMP/cache-dist-expected.txt" "$RUNNER_TEMP/cache-dist-actual.txt"
+          git diff --exit-code "$REVIEWED_COMMIT" -- dist
+      - name: Run existing action tests and lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test -- --runInBand --json --outputFile="$RUNNER_TEMP/cache-jest-results.json"
+          node - <<'NODE'
+          const fs = require('node:fs')
+          const assert = require('node:assert/strict')
+          const result = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/cache-jest-results.json', 'utf8'))
+          assert.equal(result.success, true)
+          assert.equal(result.numTotalTestSuites, 8)
+          assert.equal(result.numPassedTestSuites, 8)
+          assert.equal(result.numTotalTests, 76)
+          assert.equal(result.numPassedTests, 76)
+          assert.equal(result.numPendingTests, 0)
+          console.log(JSON.stringify({suites: result.numPassedTestSuites, tests: result.numPassedTests}))
+          NODE
+          npm run lint
+          git diff --exit-code "$REVIEWED_COMMIT" -- package.json package-lock.json .lsf-source dist
+
